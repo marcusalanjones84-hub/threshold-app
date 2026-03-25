@@ -141,3 +141,36 @@
 ├── vercel.json
 └── .env.example
 ```
+
+---
+## Update: Push Notifications Added (Jan 2026)
+
+### Feature: Daily Check-in Reminders
+- **Service:** OneSignal (with mock mode fallback)
+- **Trigger:** Shows prompt after first check-in or first streak day
+- **Default Time:** 9:00 AM daily
+
+### New Files
+- `/app/frontend/src/lib/notifications.js` - OneSignal service wrapper
+- `/app/frontend/src/context/NotificationContext.jsx` - React context for notifications
+- `/app/frontend/src/components/NotificationPrompt.jsx` - UI component for notification settings
+
+### Features
+- [x] OneSignal integration (mock mode without credentials)
+- [x] Browser native Notification API fallback
+- [x] Permission request flow on Dashboard
+- [x] Notification settings in Settings page
+- [x] Test notification button
+- [x] Enable/Disable toggle
+- [x] "Blocked" state handling with instructions
+
+### Environment Variable
+```
+REACT_APP_ONESIGNAL_APP_ID=your_onesignal_app_id
+```
+
+### Setup Instructions
+1. Create account at https://onesignal.com/
+2. Create new App (Web Push)
+3. Copy App ID to `.env`
+4. Done - notifications will work automatically

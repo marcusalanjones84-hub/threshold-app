@@ -1,12 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, LogOut, Crown, Trash2 } from 'lucide-react';
+import { useNotifications } from '../context/NotificationContext';
+import { ArrowLeft, LogOut, Crown, Trash2, Bell, BellOff } from 'lucide-react';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { profile, signOut, tier } = useAuth();
+  const { 
+    isEnabled, 
+    isSupported, 
+    isDenied,
+    requestPermission, 
+    disableNotifications,
+    sendTest,
+    loading: notificationLoading 
+  } = useNotifications();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [testSent, setTestSent] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -73,6 +84,60 @@ export default function Settings() {
             )}
           </div>
         </div>
+
+        {/* Notifications */}
+        {isSupported && (
+          <div className="card mb-6">
+            <p className="section-label mb-4">Notifications</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {isEnabled ? (
+                  <Bell size={20} className="text-[#32D74B]" />
+                ) : (
+                  <BellOff size={20} className="text-[#8E8E93]" />
+                )}
+                <div>
+                  <p className="text-white font-medium">Daily Reminders</p>
+                  <p className="text-xs text-[#8E8E93]">
+                    {isEnabled ? 'Enabled - 9:00 AM' : isDenied ? 'Blocked in browser' : 'Disabled'}
+                  </p>
+                </div>
+              </div>
+              {isEnabled ? (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      sendTest();
+                      setTestSent(true);
+                      setTimeout(() => setTestSent(false), 2000);
+                    }}
+                    className="text-xs uppercase tracking-widest text-[#8E8E93] border border-[#3A3A3C] px-3 py-2 bg-transparent cursor-pointer hover:border-white hover:text-white"
+                    disabled={testSent}
+                    data-testid="test-notification-settings-btn"
+                  >
+                    {testSent ? 'Sent!' : 'Test'}
+                  </button>
+                  <button
+                    onClick={disableNotifications}
+                    className="text-xs uppercase tracking-widest text-[#FF453A] border border-[#FF453A] px-3 py-2 bg-transparent cursor-pointer hover:bg-[#FF453A]/10"
+                    data-testid="disable-notification-settings-btn"
+                  >
+                    Disable
+                  </button>
+                </div>
+              ) : !isDenied ? (
+                <button
+                  onClick={requestPermission}
+                  disabled={notificationLoading}
+                  className="text-xs uppercase tracking-widest text-white border border-[#3A3A3C] px-4 py-2 bg-transparent cursor-pointer hover:border-white"
+                  data-testid="enable-notification-settings-btn"
+                >
+                  {notificationLoading ? 'Enabling...' : 'Enable'}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         {/* Commitment */}
         {profile?.commitment_statement && (

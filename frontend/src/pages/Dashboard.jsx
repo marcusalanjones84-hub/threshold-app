@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useStreak } from '../hooks/useStreak';
 import { useCheckin } from '../hooks/useCheckin';
 import { usePlan } from '../hooks/usePlan';
 import MilestoneCard from '../components/MilestoneCard';
+import NotificationPrompt from '../components/NotificationPrompt';
 import { MILESTONES } from '../utils/dates';
 import { ArrowRight, Settings } from 'lucide-react';
 
@@ -14,6 +15,7 @@ export default function Dashboard() {
   const { streak, loading: streakLoading } = useStreak();
   const { hasCheckedInToday, checkinCount } = useCheckin();
   const { currentDay, currentWeek, hasStarted, startPlan } = usePlan();
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(true);
 
   // Start plan automatically if not started
   useEffect(() => {
@@ -21,6 +23,11 @@ export default function Dashboard() {
       startPlan();
     }
   }, [hasStarted, profile, startPlan]);
+
+  // Show notification prompt after first check-in or after 3 days
+  const shouldShowNotificationPrompt = showNotificationPrompt && (
+    checkinCount >= 1 || (streak?.current_streak >= 1)
+  );
 
   if (authLoading || streakLoading) {
     return (
@@ -58,6 +65,13 @@ export default function Dashboard() {
         {showMilestone && (
           <div className="mb-8">
             <MilestoneCard streak={currentStreak} />
+          </div>
+        )}
+
+        {/* Notification Prompt */}
+        {shouldShowNotificationPrompt && (
+          <div className="mb-6">
+            <NotificationPrompt onDismiss={() => setShowNotificationPrompt(false)} />
           </div>
         )}
 
