@@ -1,5 +1,5 @@
 // OneSignal Push Notification Service for THRESHOLD
-// Mock mode when credentials not provided
+// Supports dual reminders: Morning Motivation + Evening Check-in
 
 const ONESIGNAL_APP_ID = process.env.REACT_APP_ONESIGNAL_APP_ID;
 
@@ -14,15 +14,19 @@ const getNotificationPrefs = () => {
     const stored = localStorage.getItem(NOTIFICATION_PREFS_KEY);
     return stored ? JSON.parse(stored) : {
       enabled: false,
-      dailyReminder: true,
-      reminderTime: '09:00',
+      morningReminder: true,
+      morningTime: '07:00',
+      eveningReminder: true,
+      eveningTime: '20:00',
       subscriptionId: null,
     };
   } catch {
     return {
       enabled: false,
-      dailyReminder: true,
-      reminderTime: '09:00',
+      morningReminder: true,
+      morningTime: '07:00',
+      eveningReminder: true,
+      eveningTime: '20:00',
       subscriptionId: null,
     };
   }
@@ -32,11 +36,19 @@ const setNotificationPrefs = (prefs) => {
   localStorage.setItem(NOTIFICATION_PREFS_KEY, JSON.stringify(prefs));
 };
 
+// Generate mock UUID
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 // Initialize OneSignal (or mock)
 export const initializeOneSignal = async () => {
   if (isOneSignalConfigured) {
     try {
-      // Load OneSignal SDK dynamically
       if (!window.OneSignalDeferred) {
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         const script = document.createElement('script');
@@ -54,7 +66,7 @@ export const initializeOneSignal = async () => {
           appId: ONESIGNAL_APP_ID,
           allowLocalhostAsSecureOrigin: true,
           notifyButton: {
-            enable: false, // We use our own UI
+            enable: false,
           },
         });
       });
@@ -73,7 +85,6 @@ export const initializeOneSignal = async () => {
 
 // Request notification permission
 export const requestNotificationPermission = async () => {
-  // Check if browser supports notifications
   if (!('Notification' in window)) {
     console.log('This browser does not support notifications');
     return { success: false, permission: 'unsupported' };
@@ -95,20 +106,19 @@ export const requestNotificationPermission = async () => {
       return { success: false, permission: 'error', error };
     }
   } else {
-    // Mock mode - use native Notification API
     try {
       const permission = await Notification.requestPermission();
       
       if (permission === 'granted') {
         const prefs = getNotificationPrefs();
         prefs.enabled = true;
-        prefs.subscriptionId = 'mock_' + Date.now();
+        prefs.subscriptionId = 'mock_' + generateUUID();
         setNotificationPrefs(prefs);
         
-        // Show a test notification
+        // Show a welcome notification
         new Notification('Threshold', {
-          body: 'Notifications enabled! You\'ll receive daily check-in reminders.',
-          icon: '/icons/icon-192.png',
+          body: 'Notifications enabled! You\'ll receive morning motivation and evening check-in reminders.',
+          icon: '/logo.png',
           tag: 'threshold-welcome',
         });
         
@@ -167,56 +177,95 @@ export const disableNotifications = async () => {
   return { success: true };
 };
 
-// Schedule local notification (for mock mode daily reminders)
-export const scheduleLocalReminder = () => {
+// Schedule local reminders (for mock mode)
+export const scheduleLocalReminders = () => {
   const prefs = getNotificationPrefs();
   
-  if (!prefs.enabled || !prefs.dailyReminder) {
-    return;
-  }
+  if (!prefs.enabled) return;
   
-  // Calculate time until next reminder
-  const [hours, minutes] = prefs.reminderTime.split(':').map(Number);
   const now = new Date();
-  const reminderTime = new Date();
-  reminderTime.setHours(hours, minutes, 0, 0);
   
-  // If reminder time has passed today, schedule for tomorrow
-  if (reminderTime <= now) {
-    reminderTime.setDate(reminderTime.getDate() + 1);
+  // Schedule morning reminder
+  if (prefs.morningReminder && prefs.morningTime) {
+    const [hours, minutes] = prefs.morningTime.split(':').map(Number);
+    const morningTime = new Date();
+    morningTime.setHours(hours, minutes, 0, 0);
+    
+    if (morningTime <= now) {
+      morningTime.setDate(morningTime.getDate() + 1);
+    }
+    
+    const msUntilMorning = morningTime - now;
+    localStorage.setItem('threshold_next_morning_reminder', morningTime.toISOString());
+    
+    if (!isOneSignalConfigured) {
+      setTimeout(() => {
+        if (Notification.permission === 'granted') {
+          new Notification('Threshold - Good Morning', {
+            body: 'Today is another day to be the man you want to be. You\'ve got this.',
+            icon: '/logo.png',
+            tag: 'threshold-morning',
+            requireInteraction: true,
+          });
+          scheduleLocalReminders();
+        }
+      }, msUntilMorning);
+    }
   }
   
-  const msUntilReminder = reminderTime - now;
-  
-  // Store the scheduled time
-  localStorage.setItem('threshold_next_reminder', reminderTime.toISOString());
-  
-  // Note: In production with OneSignal, this would be handled by the server
-  // For mock mode, we set a timeout (only works while page is open)
-  if (!isOneSignalConfigured) {
-    setTimeout(() => {
-      if (Notification.permission === 'granted') {
-        new Notification('Threshold - Daily Check-in', {
-          body: 'Take a moment to reflect on your day. How are you doing?',
-          icon: '/icons/icon-192.png',
-          tag: 'threshold-daily-reminder',
-          requireInteraction: true,
-        });
-        
-        // Reschedule for next day
-        scheduleLocalReminder();
-      }
-    }, msUntilReminder);
+  // Schedule evening reminder
+  if (prefs.eveningReminder && prefs.eveningTime) {
+    const [hours, minutes] = prefs.eveningTime.split(':').map(Number);
+    const eveningTime = new Date();
+    eveningTime.setHours(hours, minutes, 0, 0);
+    
+    if (eveningTime <= now) {
+      eveningTime.setDate(eveningTime.getDate() + 1);
+    }
+    
+    const msUntilEvening = eveningTime - now;
+    localStorage.setItem('threshold_next_evening_reminder', eveningTime.toISOString());
+    
+    if (!isOneSignalConfigured) {
+      setTimeout(() => {
+        if (Notification.permission === 'granted') {
+          new Notification('Threshold - Evening Check-in', {
+            body: 'How was your day? Take a moment to check in and reflect.',
+            icon: '/logo.png',
+            tag: 'threshold-evening',
+            requireInteraction: true,
+          });
+          scheduleLocalReminders();
+        }
+      }, msUntilEvening);
+    }
   }
 };
 
 // Send test notification
-export const sendTestNotification = () => {
+export const sendTestNotification = (type = 'general') => {
   if (Notification.permission === 'granted') {
-    new Notification('Threshold - Test', {
-      body: 'Notifications are working correctly!',
-      icon: '/icons/icon-192.png',
-      tag: 'threshold-test',
+    const messages = {
+      morning: {
+        title: 'Threshold - Morning Motivation',
+        body: 'Today is another day to be the man you want to be. You\'ve got this.',
+      },
+      evening: {
+        title: 'Threshold - Evening Check-in',
+        body: 'How was your day? Take a moment to check in and reflect.',
+      },
+      general: {
+        title: 'Threshold - Test',
+        body: 'Notifications are working correctly!',
+      },
+    };
+    
+    const msg = messages[type] || messages.general;
+    
+    new Notification(msg.title, {
+      body: msg.body,
+      icon: '/logo.png',
+      tag: `threshold-test-${type}`,
     });
     return { success: true };
   }
@@ -232,7 +281,7 @@ export const NotificationService = {
   updatePrefs: updateNotificationPrefs,
   getSettings: getNotificationSettings,
   disable: disableNotifications,
-  scheduleReminder: scheduleLocalReminder,
+  scheduleReminders: scheduleLocalReminders,
   sendTest: sendTestNotification,
   isConfigured: isOneSignalConfigured,
 };

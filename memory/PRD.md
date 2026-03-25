@@ -198,3 +198,45 @@ Users can now choose when they receive their daily check-in reminder.
 ### Storage
 - `reminderTime` stored in `threshold_notification_prefs` localStorage
 - Format: 24-hour string (e.g., "09:00", "20:00")
+
+---
+## Update: Drug Question, Dual Reminders & Logo (Jan 2026)
+
+### New Features
+
+**1. Drug Use Question Added**
+- Question 16 of 16 (new section: "The Full Picture")
+- Text: "Do you use any other substances alongside alcohol?"
+- Options:
+  - No, just alcohol
+  - Cannabis occasionally
+  - Cannabis regularly
+  - Cocaine socially or occasionally
+  - Cocaine more than occasionally
+  - Prescription medications (not as prescribed)
+  - Multiple substances
+  - Prefer not to say
+- Scoring: Adds risk points based on substance use
+
+**2. Dual Reminder System**
+- Morning Motivation: Default 7:00 AM
+  - Message: "Today is another day to be the man you want to be. You've got this."
+- Evening Check-in: Default 8:00 PM
+  - Message: "How was your day? Take a moment to check in and reflect."
+- Both can be independently toggled on/off
+- Custom time selection for each
+
+**3. Marcus Jones Coaching Logo**
+- Added to Welcome page (header)
+- Added to Settings page (footer)
+- File: `/public/logo.png`
+
+### Updated Files
+- `/app/frontend/src/data/questions.js` - Added drug question
+- `/app/frontend/src/utils/scoring.js` - Added drug use scoring
+- `/app/frontend/src/lib/notifications.js` - Dual reminder support
+- `/app/frontend/src/context/NotificationContext.jsx` - Updated settings
+- `/app/frontend/src/components/NotificationPrompt.jsx` - Dual time pickers
+- `/app/frontend/src/pages/Settings.jsx` - Dual reminder settings + logo
+- `/app/frontend/src/pages/Welcome.jsx` - Logo added
+- `/app/frontend/public/logo.png` - Marcus Jones Coaching logo

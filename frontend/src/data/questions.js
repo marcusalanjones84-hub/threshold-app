@@ -208,4 +208,22 @@ export const QUESTIONS = [
       { value: '200', label: '£150+' },
     ]
   },
+  {
+    id: 'drug_use',
+    section: 'E',
+    sectionLabel: 'The Full Picture',
+    text: 'Do you use any other substances alongside alcohol?',
+    subtext: 'This helps us understand your full situation. Completely confidential.',
+    type: 'single',
+    options: [
+      { value: 'none', label: 'No, just alcohol' },
+      { value: 'cannabis', label: 'Cannabis occasionally' },
+      { value: 'cannabis-regular', label: 'Cannabis regularly' },
+      { value: 'cocaine', label: 'Cocaine socially or occasionally' },
+      { value: 'cocaine-regular', label: 'Cocaine more than occasionally' },
+      { value: 'prescription', label: 'Prescription medications (not as prescribed)' },
+      { value: 'multiple', label: 'Multiple substances' },
+      { value: 'prefer-not', label: 'Prefer not to say' },
+    ]
+  },
 ];

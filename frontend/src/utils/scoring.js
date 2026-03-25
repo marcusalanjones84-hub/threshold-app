@@ -55,6 +55,15 @@ export function calculateResult(answers) {
   const symptoms = answers.physical_symptoms || [];
   score += symptoms.length * 3;
   
+  // Drug use - additional risk factor
+  const du = answers.drug_use;
+  if (du === 'cannabis') score += 3;
+  if (du === 'cannabis-regular') score += 8;
+  if (du === 'cocaine') score += 12;
+  if (du === 'cocaine-regular') score += 20;
+  if (du === 'prescription') score += 10;
+  if (du === 'multiple') score += 25;
+  
   // Determine profile
   let profile;
   if (score < 35) profile = 'warning';

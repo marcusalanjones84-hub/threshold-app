@@ -24,8 +24,18 @@ export default function Welcome() {
     <div className="page-container min-h-screen flex flex-col" data-testid="welcome-page">
       <div className="flex-1 flex flex-col justify-center content-width">
         <div className="fade-in">
-          {/* Logo/Brand */}
-          <p className="section-label mb-8">Threshold</p>
+          {/* Logo */}
+          <div className="mb-8">
+            <img 
+              src="/logo.png" 
+              alt="Marcus Jones Coaching" 
+              className="h-12 w-auto"
+              data-testid="logo"
+            />
+          </div>
+          
+          {/* Brand */}
+          <p className="section-label mb-4">Threshold</p>
           
           {/* Main headline */}
           <h1 className="text-4xl sm:text-5xl font-black tracking-tighter uppercase text-white mb-6 leading-tight">

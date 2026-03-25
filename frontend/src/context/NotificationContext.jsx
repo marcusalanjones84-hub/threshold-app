@@ -9,8 +9,10 @@ export function NotificationProvider({ children }) {
   const [permission, setPermission] = useState('default');
   const [isEnabled, setIsEnabled] = useState(false);
   const [settings, setSettings] = useState({
-    dailyReminder: true,
-    reminderTime: '09:00',
+    morningReminder: true,
+    morningTime: '07:00',
+    eveningReminder: true,
+    eveningTime: '20:00',
   });
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
@@ -25,9 +27,9 @@ export function NotificationProvider({ children }) {
       setInitialized(true);
       setLoading(false);
       
-      // Schedule reminder if enabled
+      // Schedule reminders if enabled
       if (NotificationService.isEnabled()) {
-        NotificationService.scheduleReminder();
+        NotificationService.scheduleReminders();
       }
     };
     
@@ -42,7 +44,8 @@ export function NotificationProvider({ children }) {
     if (result.success) {
       setPermission('granted');
       setIsEnabled(true);
-      NotificationService.scheduleReminder();
+      setSettings(NotificationService.getSettings());
+      NotificationService.scheduleReminders();
     } else {
       setPermission(result.permission);
     }
@@ -62,15 +65,15 @@ export function NotificationProvider({ children }) {
     const updated = NotificationService.updatePrefs(updates);
     setSettings(updated);
     
-    // Reschedule if reminder time changed
-    if (updates.reminderTime && isEnabled) {
-      NotificationService.scheduleReminder();
+    // Reschedule if times changed
+    if ((updates.morningTime || updates.eveningTime) && isEnabled) {
+      NotificationService.scheduleReminders();
     }
   }, [isEnabled]);
 
   // Send test notification
-  const sendTest = useCallback(() => {
-    return NotificationService.sendTest();
+  const sendTest = useCallback((type) => {
+    return NotificationService.sendTest(type);
   }, []);
 
   const value = {
