@@ -1,0 +1,109 @@
+{
+  "project_name": "THRESHOLD",
+  "theme": "Dark",
+  "archetype": "4 (Swiss & High-Contrast modified for Premium Brutalism)",
+  "global_rules": [
+    "Strictly dark background: #1C1C1E",
+    "Strictly no border radius: rounded-none everywhere (--radius: 0rem)",
+    "Strictly Inter font for all text",
+    "Strictly no emojis",
+    "Strictly no gradients",
+    "Strictly no box shadows",
+    "All interactive elements must have a data-testid attribute"
+  ],
+  "colors": {
+    "background": "#1C1C1E",
+    "foreground": "#FFFFFF",
+    "card": "#1C1C1E",
+    "card_foreground": "#FFFFFF",
+    "border": "#3A3A3C",
+    "primary": "#FFFFFF",
+    "primary_foreground": "#1C1C1E",
+    "secondary": "#2C2C2E",
+    "secondary_foreground": "#FFFFFF",
+    "muted": "#2C2C2E",
+    "muted_foreground": "#8E8E93",
+    "destructive": "#FF3B30",
+    "destructive_foreground": "#FFFFFF"
+  },
+  "css_variables_dark_mode": {
+    "--background": "240 3% 11%",
+    "--foreground": "0 0% 100%",
+    "--card": "240 3% 11%",
+    "--card-foreground": "0 0% 100%",
+    "--popover": "240 3% 11%",
+    "--popover-foreground": "0 0% 100%",
+    "--primary": "0 0% 100%",
+    "--primary-foreground": "240 3% 11%",
+    "--secondary": "240 2% 18%",
+    "--secondary-foreground": "0 0% 100%",
+    "--muted": "240 2% 18%",
+    "--muted-foreground": "240 2% 57%",
+    "--border": "240 2% 23%",
+    "--input": "240 2% 23%",
+    "--ring": "0 0% 100%",
+    "--radius": "0rem"
+  },
+  "typography": {
+    "font_family": "Inter",
+    "headings": {
+      "style": "font-black tracking-tighter uppercase",
+      "h1": "text-4xl sm:text-5xl",
+      "h2": "text-2xl sm:text-3xl",
+      "h3": "text-xl sm:text-2xl"
+    },
+    "body": {
+      "style": "font-normal leading-relaxed text-[#D4D4D6]",
+      "base": "text-base",
+      "small": "text-sm"
+    },
+    "labels": {
+      "style": "text-xs font-bold tracking-[0.2em] uppercase text-[#8E8E93]"
+    }
+  },
+  "spacing_and_layout": {
+    "general": "Generous spacing. p-6, p-8. Containers must have padding to prevent text collision with borders.",
+    "grids": "Use strict bento grids with gap-1px to create a technical/brutalist border-collapse look, or gap-4 with full sharp borders.",
+    "mobile": "Mobile-first PWA, bottom navigation fixed at the bottom with border-t border-[#3A3A3C]."
+  },
+  "components": {
+    "button": "rounded-none shadow-none border border-transparent. Primary: bg-white text-[#1C1C1E] hover:bg-[#D4D4D6]. Secondary/Ghost: bg-transparent border-white text-white hover:bg-white hover:text-[#1C1C1E]",
+    "card": "rounded-none shadow-none border border-[#3A3A3C] bg-[#1C1C1E] p-6",
+    "input": "rounded-none shadow-none border border-[#3A3A3C] bg-transparent focus-visible:ring-0 focus-visible:border-white focus-visible:outline-none",
+    "bottom_nav": "fixed bottom-0 w-full border-t border-[#3A3A3C] bg-[#1C1C1E] flex justify-around p-4 pb-safe",
+    "slider": "For daily check-ins: Use Shadcn slider but customize to have rectangular thumb (rounded-none) and sharp track. bg-[#3A3A3C] for track, bg-white for active and thumb."
+  },
+  "media": [
+    {
+      "category": "hero_background",
+      "url": "https://static.prod-images.emergentagent.com/jobs/3c3cc79b-1636-4bf8-b4e1-5895f9c2cb55/images/6813029f4420bf931716e57e2abb4cf423c7cd44c97079a1a76cd5c5424a7093.png",
+      "description": "Abstract minimalist dark texture for subtle brutalist background without gradients."
+    },
+    {
+      "category": "hero_portrait",
+      "url": "https://static.prod-images.emergentagent.com/jobs/3c3cc79b-1636-4bf8-b4e1-5895f9c2cb55/images/58e3dcd26ff439a4640c12204171f2561139499b33ab83609678582b282b7a91.png",
+      "description": "High contrast black and white portrait of a determined man looking forward."
+    },
+    {
+      "category": "athletic_texture",
+      "url": "https://images.pexels.com/photos/2282769/pexels-photo-2282769.jpeg",
+      "description": "Grayscale close-up portrait of a male athlete in a track and field setting, usable for content sections."
+    },
+    {
+       "category": "texture_dark",
+       "url": "https://images.unsplash.com/photo-1762417108293-91614140073a",
+       "description": "Dark textured surface with raised cylindrical shapes for a brutalist feel."
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Force dark mode by default on the HTML tag or Tailwind config.",
+    "Do NOT use Recharts with rounded bars. Use sharp rectangles.",
+    "Do NOT use any gradients in charts. Use solid lines and fills.",
+    "Do NOT use any emojis. Use Lucide icons (sharp, unrounded if possible, or default Lucide).",
+    "Ensure all buttons, inputs, cards, and containers have rounded-none and shadow-none applied explicitly.",
+    "Set the body background to #1C1C1E.",
+    "Include <meta name='theme-color' content='#1C1C1E'> in index.html for PWA.",
+    "For the bottom nav, ensure it accommodates safe area insets on mobile (e.g. padding-bottom).",
+    "Add 'data-testid' to all buttons, links, inputs, and major sections."
+  ]
+}
