@@ -174,3 +174,27 @@ REACT_APP_ONESIGNAL_APP_ID=your_onesignal_app_id
 2. Create new App (Web Push)
 3. Copy App ID to `.env`
 4. Done - notifications will work automatically
+
+---
+## Update: Reminder Time Customization (Jan 2026)
+
+### Feature: Custom Reminder Time
+Users can now choose when they receive their daily check-in reminder.
+
+### Available Times
+- 6:00 AM, 7:00 AM, 8:00 AM, 9:00 AM (default), 10:00 AM
+- 12:00 PM
+- 5:00 PM, 6:00 PM, 7:00 PM, 8:00 PM, 9:00 PM
+
+### Where to Access
+1. **Dashboard** - Click on "Daily Reminders" card when notifications are enabled
+2. **Settings** - Notifications section shows time picker when enabled
+
+### UI Components
+- Time picker dropdown with clear time labels (AM/PM format)
+- Current selection highlighted
+- Smooth animation on dropdown open/close
+
+### Storage
+- `reminderTime` stored in `threshold_notification_prefs` localStorage
+- Format: 24-hour string (e.g., "09:00", "20:00")
