@@ -56,6 +56,26 @@ function PublicRoute({ children }) {
   return children;
 }
 
+// Commitment Route - requires auth but NOT completed onboarding
+function CommitmentRoute({ children }) {
+  const { isAuthenticated, loading, profile } = useAuth();
+  
+  if (loading) {
+    return <LoadingScreen />;
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  // If already completed onboarding, go to dashboard
+  if (profile?.onboarding_complete) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return children;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -67,7 +87,7 @@ function AppRoutes() {
         <Route path="/results" element={<Results />} />
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<Register />} />
-        <Route path="/commitment" element={<Commitment />} />
+        <Route path="/commitment" element={<CommitmentRoute><Commitment /></CommitmentRoute>} />
         
         {/* Protected routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

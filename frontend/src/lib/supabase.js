@@ -183,44 +183,65 @@ export const supabase = {
     data[table] = data[table] || {};
     
     return {
-      select: (columns = '*') => ({
-        eq: (field, value) => ({
+      select: (columns = '*') => {
+        let filters = [];
+        
+        const createFilterChain = () => ({
+          eq: (field, value) => {
+            filters.push({ field, value });
+            return createFilterChain();
+          },
           single: async () => {
-            const items = Object.values(data[table]);
-            const item = items.find(i => i[field] === value);
-            return { data: item || null, error: item ? null : { message: 'Not found' } };
+            let items = Object.values(data[table]);
+            for (const filter of filters) {
+              items = items.filter(i => i[filter.field] === filter.value);
+            }
+            const item = items[0] || null;
+            return { data: item, error: item ? null : { message: 'Not found' } };
           },
           order: (orderField, options) => ({
             async then(resolve) {
-              let items = Object.values(data[table]).filter(i => i[field] === value);
+              let items = Object.values(data[table]);
+              for (const filter of filters) {
+                items = items.filter(i => i[filter.field] === filter.value);
+              }
+              if (options?.ascending === false) {
+                items.sort((a, b) => new Date(b[orderField]) - new Date(a[orderField]));
+              } else {
+                items.sort((a, b) => new Date(a[orderField]) - new Date(b[orderField]));
+              }
+              resolve({ data: items, error: null });
+            }
+          }),
+          async then(resolve) {
+            let items = Object.values(data[table]);
+            for (const filter of filters) {
+              items = items.filter(i => i[filter.field] === filter.value);
+            }
+            resolve({ data: items, error: null });
+          }
+        });
+        
+        return {
+          ...createFilterChain(),
+          order: (orderField, options) => ({
+            async then(resolve) {
+              let items = Object.values(data[table]);
               if (options?.ascending === false) {
                 items.sort((a, b) => new Date(b[orderField]) - new Date(a[orderField]));
               }
               resolve({ data: items, error: null });
             }
           }),
+          single: async () => {
+            const items = Object.values(data[table]);
+            return { data: items[0] || null, error: null };
+          },
           async then(resolve) {
-            const items = Object.values(data[table]).filter(i => i[field] === value);
-            resolve({ data: items, error: null });
+            resolve({ data: Object.values(data[table]), error: null, count: Object.values(data[table]).length });
           }
-        }),
-        order: (orderField, options) => ({
-          async then(resolve) {
-            let items = Object.values(data[table]);
-            if (options?.ascending === false) {
-              items.sort((a, b) => new Date(b[orderField]) - new Date(a[orderField]));
-            }
-            resolve({ data: items, error: null });
-          }
-        }),
-        single: async () => {
-          const items = Object.values(data[table]);
-          return { data: items[0] || null, error: null };
-        },
-        async then(resolve) {
-          resolve({ data: Object.values(data[table]), error: null, count: Object.values(data[table]).length });
-        }
-      }),
+        };
+      },
       
       insert: (item) => ({
         select: () => ({
@@ -249,33 +270,32 @@ export const supabase = {
       }),
       
       update: (updates) => ({
-        eq: (field, value) => ({
-          select: () => ({
-            single: async () => {
-              const items = Object.values(data[table]);
-              const item = items.find(i => i[field] === value);
-              if (item) {
-                const updated = { ...item, ...updates, updated_at: new Date().toISOString() };
-                data[table][item.id] = updated;
-                setStoredData(data);
-                return { data: updated, error: null };
-              }
-              return { data: null, error: { message: 'Not found' } };
-            }
-          }),
-          async then(resolve) {
+        eq: (field, value) => {
+          const doUpdate = () => {
             const items = Object.values(data[table]);
             const item = items.find(i => i[field] === value);
             if (item) {
               const updated = { ...item, ...updates, updated_at: new Date().toISOString() };
               data[table][item.id] = updated;
               setStoredData(data);
-              resolve({ data: updated, error: null });
-            } else {
-              resolve({ data: null, error: { message: 'Not found' } });
+              return { data: updated, error: null };
             }
-          }
-        })
+            return { data: null, error: { message: 'Not found' } };
+          };
+          
+          return {
+            select: () => ({
+              single: async () => doUpdate(),
+              async then(resolve) {
+                const result = doUpdate();
+                resolve({ data: result.data ? [result.data] : [], error: result.error });
+              }
+            }),
+            async then(resolve) {
+              resolve(doUpdate());
+            }
+          };
+        }
       }),
       
       upsert: (item) => ({
