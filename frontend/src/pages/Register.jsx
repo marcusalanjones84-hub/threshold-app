@@ -18,30 +18,43 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const { data, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-          }
+      // Use direct fetch to avoid the body stream issue
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/auth/v1/signup`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            email,
+            password,
+            data: { first_name: firstName }
+          })
         }
-      });
+      );
 
-      if (authError) {
-        setError(authError.message);
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error_description || result.msg || 'Signup failed');
         setLoading(false);
         return;
       }
 
-      if (data?.user) {
-        // Update profile with first name (don't block on errors)
-        supabase
-          .from('profiles')
-          .update({ first_name: firstName })
-          .eq('id', data.user.id)
-          .then(() => console.log('Profile updated'))
-          .catch((err) => console.log('Profile update skipped:', err));
+      if (result.id || result.user) {
+        const userId = result.id || result.user?.id;
+        
+        // Update profile with first name (fire and forget)
+        if (userId) {
+          supabase
+            .from('profiles')
+            .update({ first_name: firstName })
+            .eq('id', userId)
+            .then(() => console.log('Profile updated'))
+            .catch(() => {});
+        }
         
         // Send to GoHighLevel (fire and forget)
         const API_URL = process.env.REACT_APP_BACKEND_URL || '';
@@ -61,38 +74,37 @@ export default function Register() {
         const assessmentResult = sessionStorage.getItem('assessment_result');
         const assessmentAnswers = sessionStorage.getItem('assessment_answers');
         
-        if (assessmentResult && assessmentAnswers) {
+        if (assessmentResult && assessmentAnswers && userId) {
           try {
-            const result = JSON.parse(assessmentResult);
+            const parsedResult = JSON.parse(assessmentResult);
             const answers = JSON.parse(assessmentAnswers);
             
-            // Store assessment (don't block on errors)
             supabase.from('assessments').insert({
-              user_id: data.user.id,
+              user_id: userId,
               ...answers,
-              profile_result: result.profile,
-              risk_score: result.score,
-              weekly_spend_gbp: result.weeklySpend,
-              drinks_per_day: Math.round(result.drinksPerDay),
-            }).catch((err) => console.log('Assessment save skipped:', err));
+              profile_result: parsedResult.profile,
+              risk_score: parsedResult.score,
+              weekly_spend_gbp: parsedResult.weeklySpend,
+              drinks_per_day: Math.round(parsedResult.drinksPerDay),
+            }).catch(() => {});
             
-            // Clear session storage
             sessionStorage.removeItem('assessment_result');
             sessionStorage.removeItem('assessment_answers');
           } catch (parseErr) {
-            console.log('Assessment parse error:', parseErr);
+            console.log('Assessment parse error');
           }
         }
         
-        navigate('/commitment');
+        // Show success message
+        setError('Account created! Please check your email to confirm, then sign in.');
+        setLoading(false);
       } else {
-        // User created but may need email confirmation
         setError('Please check your email to confirm your account.');
         setLoading(false);
       }
     } catch (err) {
       console.error('Signup error:', err);
-      setError(err?.message || 'Something went wrong. Please try again.');
+      setError('Unable to create account. Please try again.');
       setLoading(false);
     }
   };

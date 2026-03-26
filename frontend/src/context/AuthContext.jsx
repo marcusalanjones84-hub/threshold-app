@@ -28,14 +28,21 @@ export function AuthProvider({ children }) {
     let mounted = true;
 
     async function initAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (mounted) {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (mounted) {
+          setUser(session?.user ?? null);
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          }
+          setLoading(false);
         }
-        setLoading(false);
+      } catch (err) {
+        console.error('Auth init error:', err);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     }
 
@@ -46,7 +53,10 @@ export function AuthProvider({ children }) {
         if (mounted) {
           setUser(session?.user ?? null);
           if (session?.user) {
-            await fetchProfile(session.user.id);
+            // Small delay to prevent race conditions
+            setTimeout(() => {
+              if (mounted) fetchProfile(session.user.id);
+            }, 100);
           } else {
             setProfile(null);
           }

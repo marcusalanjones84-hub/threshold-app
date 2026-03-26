@@ -8,7 +8,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase credentials not found. Running in demo mode.');
 }
 
-// Create Supabase client
+// Create Supabase client with fetch options to prevent body stream issues
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key',
@@ -17,6 +17,11 @@ export const supabase = createClient(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true
+    },
+    global: {
+      fetch: (url, options = {}) => {
+        return fetch(url, { ...options });
+      }
     }
   }
 );
