@@ -1,32 +1,123 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { TIER_DETAILS, mockUpgradeTier } from '../lib/stripe';
-import { ArrowLeft, Check } from 'lucide-react';
+import { TIER_DETAILS, createCheckoutSession, pollPaymentStatus, mockUpgradeTier } from '../lib/stripe';
+import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 
 export default function Upgrade() {
   const navigate = useNavigate();
-  const { tier, refreshProfile } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { tier, refreshProfile, user, profile } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState('pro');
   const [billingCycle, setBillingCycle] = useState('annual');
   const [loading, setLoading] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [error, setError] = useState(null);
+
+  // Check for return from Stripe
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id');
+    const status = searchParams.get('status');
+
+    if (sessionId && status === 'success') {
+      setPaymentStatus('checking');
+      pollPaymentStatus(
+        sessionId,
+        (result) => {
+          setPaymentStatus('success');
+          // Update local tier based on metadata
+          const packageId = result.metadata?.package_id;
+          if (packageId) {
+            const newTier = packageId.includes('complete') ? 'complete' : 'pro';
+            mockUpgradeTier(newTier);
+            refreshProfile();
+          }
+          // Redirect after short delay
+          setTimeout(() => navigate('/dashboard'), 2000);
+        },
+        (errorMsg) => {
+          setPaymentStatus('error');
+          setError(errorMsg);
+        }
+      );
+    } else if (status === 'cancelled') {
+      setPaymentStatus('cancelled');
+    }
+  }, [searchParams, navigate, refreshProfile]);
 
   const handleUpgrade = async () => {
     setLoading(true);
+    setError(null);
     
-    // Mock upgrade - in production, this would redirect to Stripe
-    const success = mockUpgradeTier(selectedPlan);
-    
-    if (success) {
-      await refreshProfile();
-      navigate('/dashboard');
+    try {
+      // Determine package ID
+      let packageId;
+      if (selectedPlan === 'complete') {
+        packageId = 'complete_monthly';
+      } else {
+        packageId = billingCycle === 'annual' ? 'pro_annual' : 'pro_monthly';
+      }
+      
+      // Create checkout session and redirect
+      await createCheckoutSession(
+        packageId,
+        user?.id || null,
+        profile?.email || null
+      );
+    } catch (err) {
+      setError(err.message || 'Failed to start checkout');
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const proDetails = TIER_DETAILS.pro;
   const completeDetails = TIER_DETAILS.complete;
+
+  // Payment status screens
+  if (paymentStatus === 'checking') {
+    return (
+      <div className="page-container min-h-screen flex flex-col items-center justify-center">
+        <Loader2 size={48} className="text-white animate-spin mb-4" />
+        <p className="text-white text-lg">Verifying payment...</p>
+        <p className="text-[#8E8E93] text-sm mt-2">Please wait</p>
+      </div>
+    );
+  }
+
+  if (paymentStatus === 'success') {
+    return (
+      <div className="page-container min-h-screen flex flex-col items-center justify-center">
+        <div className="w-16 h-16 border-2 border-[#32D74B] flex items-center justify-center mb-4">
+          <Check size={32} className="text-[#32D74B]" />
+        </div>
+        <p className="text-white text-lg font-bold">Payment Successful!</p>
+        <p className="text-[#8E8E93] text-sm mt-2">Welcome to Threshold Pro</p>
+        <p className="text-[#8E8E93] text-xs mt-4">Redirecting to dashboard...</p>
+      </div>
+    );
+  }
+
+  if (paymentStatus === 'cancelled') {
+    return (
+      <div className="page-container pb-24" data-testid="upgrade-page">
+        <div className="content-width">
+          <div className="card border-[#D4A017] mb-6 text-center">
+            <p className="text-[#D4A017] font-medium mb-2">Payment Cancelled</p>
+            <p className="text-[#8E8E93] text-sm">No worries - you can try again when ready.</p>
+          </div>
+          <button
+            onClick={() => {
+              setPaymentStatus(null);
+              navigate('/upgrade', { replace: true });
+            }}
+            className="btn-primary"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container pb-24" data-testid="upgrade-page">
@@ -45,6 +136,13 @@ export default function Upgrade() {
             Get the full 30-day programme
           </p>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="card border-[#FF453A] mb-6">
+            <p className="text-[#FF453A] text-sm">{error}</p>
+          </div>
+        )}
 
         {/* Current Plan */}
         {tier !== 'free' && (
@@ -159,16 +257,23 @@ export default function Upgrade() {
           <button
             onClick={handleUpgrade}
             disabled={loading}
-            className="btn-primary"
+            className="btn-primary flex items-center justify-center gap-2"
             data-testid="confirm-upgrade-btn"
           >
-            {loading ? 'Processing...' : `Upgrade to ${selectedPlan === 'pro' ? 'Pro' : 'Complete'}`}
+            {loading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                <span>Redirecting to checkout...</span>
+              </>
+            ) : (
+              `Upgrade to ${selectedPlan === 'pro' ? 'Pro' : 'Complete'}`
+            )}
           </button>
         )}
 
-        {/* Note about mock */}
+        {/* Stripe trust badge */}
         <p className="text-xs text-[#8E8E93] text-center mt-4">
-          Demo mode: Upgrade is simulated. Connect Stripe for real payments.
+          Secure payment powered by Stripe
         </p>
       </div>
     </div>
