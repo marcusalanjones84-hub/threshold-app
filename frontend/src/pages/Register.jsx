@@ -17,15 +17,17 @@ export default function Register() {
     setError('');
     setLoading(true);
 
+    const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+    const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+
     try {
-      // Use direct fetch to avoid the body stream issue
       const response = await fetch(
-        `${process.env.REACT_APP_SUPABASE_URL}/auth/v1/signup`,
+        `${supabaseUrl}/auth/v1/signup`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': process.env.REACT_APP_SUPABASE_ANON_KEY,
+            'apikey': supabaseKey,
           },
           body: JSON.stringify({
             email,
@@ -35,27 +37,31 @@ export default function Register() {
         }
       );
 
-      const result = await response.json();
+      const responseText = await response.text();
+      let result;
+      
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseErr) {
+        console.error('Failed to parse response:', responseText);
+        setError('Server error. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      if (response.status === 429) {
+        setError('Too many attempts. Please wait a minute and try again.');
+        setLoading(false);
+        return;
+      }
 
       if (!response.ok) {
-        setError(result.error_description || result.msg || 'Signup failed');
+        setError(result.error_description || result.msg || 'Signup failed. Please try again.');
         setLoading(false);
         return;
       }
 
       if (result.id || result.user) {
-        const userId = result.id || result.user?.id;
-        
-        // Update profile with first name (fire and forget)
-        if (userId) {
-          supabase
-            .from('profiles')
-            .update({ first_name: firstName })
-            .eq('id', userId)
-            .then(() => console.log('Profile updated'))
-            .catch(() => {});
-        }
-        
         // Send to GoHighLevel (fire and forget)
         const API_URL = process.env.REACT_APP_BACKEND_URL || '';
         if (API_URL) {
@@ -70,41 +76,16 @@ export default function Register() {
           }).catch(() => {});
         }
         
-        // Store assessment data if available
-        const assessmentResult = sessionStorage.getItem('assessment_result');
-        const assessmentAnswers = sessionStorage.getItem('assessment_answers');
-        
-        if (assessmentResult && assessmentAnswers && userId) {
-          try {
-            const parsedResult = JSON.parse(assessmentResult);
-            const answers = JSON.parse(assessmentAnswers);
-            
-            supabase.from('assessments').insert({
-              user_id: userId,
-              ...answers,
-              profile_result: parsedResult.profile,
-              risk_score: parsedResult.score,
-              weekly_spend_gbp: parsedResult.weeklySpend,
-              drinks_per_day: Math.round(parsedResult.drinksPerDay),
-            }).catch(() => {});
-            
-            sessionStorage.removeItem('assessment_result');
-            sessionStorage.removeItem('assessment_answers');
-          } catch (parseErr) {
-            console.log('Assessment parse error');
-          }
-        }
-        
-        // Show success message
-        setError('Account created! Please check your email to confirm, then sign in.');
+        setError('Account created! Check your email to confirm, then sign in.');
         setLoading(false);
+        setTimeout(() => navigate('/login'), 3000);
       } else {
-        setError('Please check your email to confirm your account.');
+        setError('Check your email to confirm your account.');
         setLoading(false);
       }
     } catch (err) {
       console.error('Signup error:', err);
-      setError('Unable to create account. Please try again.');
+      setError('Connection error. Please check your internet and try again.');
       setLoading(false);
     }
   };

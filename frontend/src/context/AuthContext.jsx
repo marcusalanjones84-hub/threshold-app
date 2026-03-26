@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const AuthContext = createContext({});
 
@@ -9,22 +9,30 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async (userId) => {
+    if (!isSupabaseConfigured()) return;
+    
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       
       if (!error && data) {
         setProfile(data);
       }
     } catch (err) {
-      console.error('Profile fetch error:', err);
+      // Silently fail - profile may not exist yet
+      console.log('Profile fetch skipped');
     }
   }, []);
 
   useEffect(() => {
+    if (!isSupabaseConfigured()) {
+      setLoading(false);
+      return;
+    }
+
     let mounted = true;
 
     async function initAuth() {
@@ -34,12 +42,12 @@ export function AuthProvider({ children }) {
         if (mounted) {
           setUser(session?.user ?? null);
           if (session?.user) {
-            await fetchProfile(session.user.id);
+            fetchProfile(session.user.id);
           }
           setLoading(false);
         }
       } catch (err) {
-        console.error('Auth init error:', err);
+        console.log('Auth init skipped');
         if (mounted) {
           setLoading(false);
         }
@@ -48,24 +56,30 @@ export function AuthProvider({ children }) {
 
     initAuth();
 
-    const { data: { subscription } } = 
-      supabase.auth.onAuthStateChange(async (_event, session) => {
+    let subscription;
+    try {
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
         if (mounted) {
           setUser(session?.user ?? null);
           if (session?.user) {
-            // Small delay to prevent race conditions
             setTimeout(() => {
               if (mounted) fetchProfile(session.user.id);
-            }, 100);
+            }, 500);
           } else {
             setProfile(null);
           }
         }
       });
+      subscription = data?.subscription;
+    } catch (err) {
+      console.log('Auth listener skipped');
+    }
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, [fetchProfile]);
 
