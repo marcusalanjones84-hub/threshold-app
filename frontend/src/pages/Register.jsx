@@ -35,6 +35,12 @@ export default function Register() {
       }
 
       if (data?.user) {
+        // Update profile with first name
+        await supabase
+          .from('profiles')
+          .update({ first_name: firstName })
+          .eq('id', data.user.id);
+        
         // Store assessment data if available
         const assessmentResult = sessionStorage.getItem('assessment_result');
         const assessmentAnswers = sessionStorage.getItem('assessment_answers');

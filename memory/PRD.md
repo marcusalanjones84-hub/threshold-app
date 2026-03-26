@@ -46,8 +46,9 @@
 - React 18 (Create React App)
 - React Router v6
 - Tailwind CSS
-- Mock Supabase (localStorage-based)
-- Mock Stripe payments
+- Supabase (Real - Auth + PostgreSQL database)
+- Stripe (Real - Live subscription payments)
+- OneSignal (Push notifications)
 - Recharts for progress visualization
 - Lucide React icons
 
@@ -62,10 +63,10 @@
 ## Prioritized Backlog
 
 ### P0 - Critical (Before Production)
-- [ ] Connect real Supabase credentials
-- [ ] Connect real Stripe for payments
-- [ ] Email verification flow
-- [ ] Password reset functionality
+- [x] Connect real Supabase credentials ✅
+- [x] Connect real Stripe for payments ✅
+- [ ] Email verification flow (Supabase handles this - enable in dashboard)
+- [ ] Password reset functionality (Supabase handles this - enable in dashboard)
 
 ### P1 - High Priority
 - [ ] Offline support (service worker caching)
