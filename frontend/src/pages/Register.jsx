@@ -41,6 +41,23 @@ export default function Register() {
           .update({ first_name: firstName })
           .eq('id', data.user.id);
         
+        // Send to GoHighLevel (non-blocking)
+        try {
+          const API_URL = process.env.REACT_APP_BACKEND_URL || '';
+          fetch(`${API_URL}/api/integrations/ghl-signup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: email,
+              first_name: firstName,
+              source: 'THRESHOLD App Signup'
+            })
+          }).catch(err => console.log('GHL sync skipped:', err));
+        } catch (ghlErr) {
+          // Don't block signup if GHL fails
+          console.log('GHL integration skipped');
+        }
+        
         // Store assessment data if available
         const assessmentResult = sessionStorage.getItem('assessment_result');
         const assessmentAnswers = sessionStorage.getItem('assessment_answers');

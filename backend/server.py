@@ -10,6 +10,7 @@ from typing import List, Optional, Dict
 import uuid
 from datetime import datetime, timezone
 import stripe
+import httpx
 
 
 ROOT_DIR = Path(__file__).parent
@@ -26,6 +27,9 @@ logger = logging.getLogger(__name__)
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
+
+# GoHighLevel webhook
+GHL_WEBHOOK_URL = os.environ.get('GHL_WEBHOOK_URL')
 
 # Stripe configuration
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
@@ -256,6 +260,53 @@ async def stripe_webhook(request: Request):
 async def get_prices():
     """Get available subscription prices"""
     return STRIPE_PRICES
+
+
+# ============ GOHIGHLEVEL INTEGRATION ============
+
+class GHLSignupRequest(BaseModel):
+    email: str
+    first_name: Optional[str] = None
+    source: str = "THRESHOLD App"
+
+@api_router.post("/integrations/ghl-signup")
+async def send_to_gohighlevel(signup: GHLSignupRequest):
+    """Send new signup to GoHighLevel webhook"""
+    
+    if not GHL_WEBHOOK_URL:
+        logger.warning("GHL_WEBHOOK_URL not configured")
+        return {"status": "skipped", "message": "GoHighLevel not configured"}
+    
+    try:
+        payload = {
+            "email": signup.email,
+            "firstName": signup.first_name or "",
+            "source": signup.source,
+            "tags": ["THRESHOLD", "App Signup"],
+            "customFields": {
+                "signup_date": datetime.now(timezone.utc).isoformat(),
+                "app_source": "THRESHOLD PWA"
+            }
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                GHL_WEBHOOK_URL,
+                json=payload,
+                timeout=10.0
+            )
+            
+            if response.status_code in [200, 201, 204]:
+                logger.info(f"Successfully sent signup to GHL: {signup.email}")
+                return {"status": "success", "message": "Contact sent to GoHighLevel"}
+            else:
+                logger.error(f"GHL webhook returned {response.status_code}: {response.text}")
+                return {"status": "error", "message": f"Webhook returned {response.status_code}"}
+                
+    except Exception as e:
+        logger.error(f"Failed to send to GHL: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
 
 # Include the router in the main app
 app.include_router(api_router)
