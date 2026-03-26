@@ -35,17 +35,15 @@ export default function Register() {
       }
 
       if (data?.user) {
-        // Update profile with first name
-        try {
-          await supabase
-            .from('profiles')
-            .update({ first_name: firstName })
-            .eq('id', data.user.id);
-        } catch (profileErr) {
-          console.log('Profile update skipped:', profileErr);
-        }
+        // Update profile with first name (don't block on errors)
+        supabase
+          .from('profiles')
+          .update({ first_name: firstName })
+          .eq('id', data.user.id)
+          .then(() => console.log('Profile updated'))
+          .catch((err) => console.log('Profile update skipped:', err));
         
-        // Send to GoHighLevel (fire and forget - don't await)
+        // Send to GoHighLevel (fire and forget)
         const API_URL = process.env.REACT_APP_BACKEND_URL || '';
         if (API_URL) {
           fetch(`${API_URL}/api/integrations/ghl-signup`, {
@@ -56,8 +54,7 @@ export default function Register() {
               first_name: firstName,
               source: 'THRESHOLD App Signup'
             })
-          }).then(() => console.log('GHL sync sent'))
-            .catch(() => console.log('GHL sync skipped'));
+          }).catch(() => {});
         }
         
         // Store assessment data if available
@@ -65,28 +62,37 @@ export default function Register() {
         const assessmentAnswers = sessionStorage.getItem('assessment_answers');
         
         if (assessmentResult && assessmentAnswers) {
-          const result = JSON.parse(assessmentResult);
-          const answers = JSON.parse(assessmentAnswers);
-          
-          // Store assessment
-          await supabase.from('assessments').insert({
-            user_id: data.user.id,
-            ...answers,
-            profile_result: result.profile,
-            risk_score: result.score,
-            weekly_spend_gbp: result.weeklySpend,
-            drinks_per_day: Math.round(result.drinksPerDay),
-          });
-          
-          // Clear session storage
-          sessionStorage.removeItem('assessment_result');
-          sessionStorage.removeItem('assessment_answers');
+          try {
+            const result = JSON.parse(assessmentResult);
+            const answers = JSON.parse(assessmentAnswers);
+            
+            // Store assessment (don't block on errors)
+            supabase.from('assessments').insert({
+              user_id: data.user.id,
+              ...answers,
+              profile_result: result.profile,
+              risk_score: result.score,
+              weekly_spend_gbp: result.weeklySpend,
+              drinks_per_day: Math.round(result.drinksPerDay),
+            }).catch((err) => console.log('Assessment save skipped:', err));
+            
+            // Clear session storage
+            sessionStorage.removeItem('assessment_result');
+            sessionStorage.removeItem('assessment_answers');
+          } catch (parseErr) {
+            console.log('Assessment parse error:', parseErr);
+          }
         }
         
         navigate('/commitment');
+      } else {
+        // User created but may need email confirmation
+        setError('Please check your email to confirm your account.');
+        setLoading(false);
       }
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      console.error('Signup error:', err);
+      setError(err?.message || 'Something went wrong. Please try again.');
       setLoading(false);
     }
   };
