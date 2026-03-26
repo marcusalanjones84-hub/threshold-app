@@ -15,6 +15,13 @@ import stripe
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Setup logging first
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
@@ -24,24 +31,24 @@ db = client[os.environ['DB_NAME']]
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY')
 stripe.api_key = STRIPE_API_KEY
 
-# Fixed pricing packages (amounts in GBP)
+# Pricing packages from environment variables
 STRIPE_PRICES = {
     "pro_monthly": {
-        "price_id": "price_1TFBEUG9itmP4q8VQtGCfAf9",
+        "price_id": os.environ.get('STRIPE_PRO_MONTHLY_PRICE_ID', 'price_1TFBEUG9itmP4q8VQtGCfAf9'),
         "name": "Threshold Pro Monthly",
         "amount": 14.99,
         "currency": "gbp",
         "tier": "pro"
     },
     "pro_annual": {
-        "price_id": "price_1TFBGqG9itmP4q8VKYOJkAHb",
+        "price_id": os.environ.get('STRIPE_PRO_ANNUAL_PRICE_ID', 'price_1TFBGqG9itmP4q8VKYOJkAHb'),
         "name": "Threshold Pro Annual",
         "amount": 119.00,
         "currency": "gbp",
         "tier": "pro"
     },
     "complete_monthly": {
-        "price_id": "price_1TFBHYG9itmP4q8V1E3tzRoz",
+        "price_id": os.environ.get('STRIPE_COMPLETE_PRICE_ID', 'price_1TFBHYG9itmP4q8V1E3tzRoz'),
         "name": "Threshold Complete",
         "amount": 297.00,
         "currency": "gbp",
@@ -260,13 +267,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
