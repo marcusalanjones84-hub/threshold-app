@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
-import { ArrowLeft, LogOut, Crown, Trash2, Bell, BellOff, Clock, ChevronDown, Sun, Moon } from 'lucide-react';
+import { ArrowLeft, LogOut, Crown, Trash2, Bell, BellOff, Clock, ChevronDown, Sun, Moon, Heart, ChevronRight } from 'lucide-react';
 
 // Available reminder times
 const MORNING_TIMES = [
@@ -282,6 +282,25 @@ export default function Settings() {
             )}
           </div>
         )}
+
+        {/* Partner Access */}
+        <div className="card mb-6">
+          <p className="section-label mb-4">Accountability</p>
+          <button
+            onClick={() => navigate('/partner-access')}
+            className="w-full flex items-center justify-between p-0 bg-transparent border-0 cursor-pointer"
+            data-testid="partner-access-btn"
+          >
+            <div className="flex items-center gap-3">
+              <Heart size={20} className="text-[#FF453A]" />
+              <div className="text-left">
+                <p className="text-white font-medium">Partner Access</p>
+                <p className="text-xs text-[#8E8E93]">Share progress with someone you trust</p>
+              </div>
+            </div>
+            <ChevronRight size={20} className="text-[#8E8E93]" />
+          </button>
+        </div>
 
         {/* Actions */}
         <div className="space-y-4">

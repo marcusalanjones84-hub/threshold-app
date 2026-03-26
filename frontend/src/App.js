@@ -21,6 +21,8 @@ import Coaching from './pages/Coaching';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Settings from './pages/Settings';
+import PartnerAccess from './pages/PartnerAccess';
+import PartnerView from './pages/PartnerView';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -100,6 +102,10 @@ function AppRoutes() {
         <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
         <Route path="/coaching" element={<ProtectedRoute><Coaching /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/partner-access" element={<ProtectedRoute><PartnerAccess /></ProtectedRoute>} />
+        
+        {/* Public partner view route - accessible without auth */}
+        <Route path="/partner/:code" element={<PartnerView />} />
         
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

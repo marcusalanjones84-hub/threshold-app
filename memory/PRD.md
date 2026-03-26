@@ -69,8 +69,8 @@
 
 ### P1 - High Priority
 - [ ] Offline support (service worker caching)
-- [ ] Push notifications for check-in reminders
-- [ ] Partner access feature
+- [x] Push notifications for check-in reminders (OneSignal - mocked)
+- [x] Partner access feature (completed)
 - [ ] SMS reminders (Twilio)
 
 ### P2 - Medium Priority
@@ -240,3 +240,41 @@ Users can now choose when they receive their daily check-in reminder.
 - `/app/frontend/src/pages/Settings.jsx` - Dual reminder settings + logo
 - `/app/frontend/src/pages/Welcome.jsx` - Logo added
 - `/app/frontend/public/logo.png` - Marcus Jones Coaching logo
+
+---
+## Update: Partner Access Feature (Dec 2025)
+
+### Feature: Accountability Partner View
+Allows users to share their progress with a trusted partner without exposing private data.
+
+### What Partners Can See
+- Current streak and longest streak
+- Whether user has checked in today
+- Last 7 days check-in status (alcohol-free / drank)
+- Plan progress (week 1-4)
+
+### What Partners Cannot See
+- Journal entries (completely private)
+- Assessment results
+- Commitment statement
+- Daily check-in details or scores
+
+### New Files
+- `/app/frontend/src/hooks/usePartnerAccess.js` - Partner code generation and management
+- `/app/frontend/src/pages/PartnerAccess.jsx` - User UI to create/manage partner links
+- `/app/frontend/src/pages/PartnerView.jsx` - Partner view of user's progress
+
+### Routes Added
+- `/partner-access` - Protected route for users to manage partner access
+- `/partner/:code` - Public route for partners to view progress
+
+### How It Works
+1. User goes to Settings > Partner Access
+2. Clicks "Create Partner Link" to generate 8-character code
+3. Shares link with trusted partner (via copy or native share)
+4. Partner opens link to see streak, check-in status, and plan progress
+5. User can revoke access anytime from Partner Access page
+
+### Data Storage
+- Partner code stored in localStorage: `threshold_partner_code_{userId}`
+- Partner data stored in localStorage: `threshold_partner_data_{code}`
