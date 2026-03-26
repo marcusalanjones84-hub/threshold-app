@@ -36,14 +36,18 @@ export default function Register() {
 
       if (data?.user) {
         // Update profile with first name
-        await supabase
-          .from('profiles')
-          .update({ first_name: firstName })
-          .eq('id', data.user.id);
-        
-        // Send to GoHighLevel (non-blocking)
         try {
-          const API_URL = process.env.REACT_APP_BACKEND_URL || '';
+          await supabase
+            .from('profiles')
+            .update({ first_name: firstName })
+            .eq('id', data.user.id);
+        } catch (profileErr) {
+          console.log('Profile update skipped:', profileErr);
+        }
+        
+        // Send to GoHighLevel (fire and forget - don't await)
+        const API_URL = process.env.REACT_APP_BACKEND_URL || '';
+        if (API_URL) {
           fetch(`${API_URL}/api/integrations/ghl-signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -52,10 +56,8 @@ export default function Register() {
               first_name: firstName,
               source: 'THRESHOLD App Signup'
             })
-          }).catch(err => console.log('GHL sync skipped:', err));
-        } catch (ghlErr) {
-          // Don't block signup if GHL fails
-          console.log('GHL integration skipped');
+          }).then(() => console.log('GHL sync sent'))
+            .catch(() => console.log('GHL sync skipped'));
         }
         
         // Store assessment data if available
