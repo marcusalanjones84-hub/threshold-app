@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -17,12 +17,7 @@ export default function Journal() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchEntries();
-    randomizePrompt();
-  }, [user]);
-
-  const fetchEntries = async () => {
+  const fetchEntries = useCallback(async () => {
     if (!user) return;
     
     const { data } = await supabase
@@ -33,7 +28,12 @@ export default function Journal() {
     
     setEntries(data || []);
     setLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    fetchEntries();
+    randomizePrompt();
+  }, [user, fetchEntries]);
 
   const randomizePrompt = () => {
     const randomIndex = Math.floor(Math.random() * JOURNAL_PROMPTS.length);
