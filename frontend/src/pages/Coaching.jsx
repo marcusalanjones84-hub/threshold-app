@@ -1,11 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import TierGate from '../components/TierGate';
-import { ArrowLeft, Calendar, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, MessageCircle, Users, ExternalLink } from 'lucide-react';
+
+const CALENDLY_URL = 'https://calendly.com/marcusjonescoaching/weekly-coaching-call';
+const COMMUNITY_URL = 'https://www.skool.com/booze-to-beast';
+const WEBSITE_URL = 'https://boozetobeast.com/';
 
 export default function Coaching() {
   const navigate = useNavigate();
   const { tier } = useAuth();
+
+  const openLink = (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   if (tier !== 'complete') {
     return (
@@ -63,32 +71,57 @@ export default function Coaching() {
             </div>
           </div>
           <button 
-            className="btn-primary"
+            className="btn-primary flex items-center justify-center gap-2"
+            onClick={() => openLink(CALENDLY_URL)}
             data-testid="book-session-btn"
           >
             Schedule Session
+            <ExternalLink size={16} />
           </button>
           <p className="text-xs text-[#8E8E93] mt-3 text-center">
-            Booking opens 48 hours before your next available slot
+            Book directly via Calendly
           </p>
         </div>
 
-        {/* WhatsApp Support */}
-        <div className="card mb-6" data-testid="whatsapp-card">
+        {/* Community */}
+        <div className="card mb-6" data-testid="community-card">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 border border-[#3A3A3C] flex items-center justify-center">
+              <Users size={24} className="text-white" />
+            </div>
+            <div>
+              <p className="text-white font-bold">Private Community</p>
+              <p className="text-sm text-[#8E8E93]">Connect with others on the same journey</p>
+            </div>
+          </div>
+          <button 
+            className="btn-secondary flex items-center justify-center gap-2"
+            onClick={() => openLink(COMMUNITY_URL)}
+            data-testid="community-btn"
+          >
+            Join Community
+            <ExternalLink size={16} />
+          </button>
+        </div>
+
+        {/* Resources */}
+        <div className="card mb-6" data-testid="resources-card">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-12 h-12 border border-[#3A3A3C] flex items-center justify-center">
               <MessageCircle size={24} className="text-white" />
             </div>
             <div>
-              <p className="text-white font-bold">WhatsApp Support</p>
-              <p className="text-sm text-[#8E8E93]">Mon-Fri, 9am-6pm</p>
+              <p className="text-white font-bold">Booze to Beast</p>
+              <p className="text-sm text-[#8E8E93]">Resources and articles</p>
             </div>
           </div>
           <button 
-            className="btn-secondary"
-            data-testid="whatsapp-btn"
+            className="btn-secondary flex items-center justify-center gap-2"
+            onClick={() => openLink(WEBSITE_URL)}
+            data-testid="website-btn"
           >
-            Message Coach
+            Visit Website
+            <ExternalLink size={16} />
           </button>
         </div>
 
