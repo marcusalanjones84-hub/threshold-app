@@ -48,7 +48,7 @@ export default function Dashboard() {
         <div className="flex justify-between items-start mb-8">
           <div>
             <h1 className="text-2xl font-bold text-white">
-              {greeting}{profile?.first_name ? `, ${profile.first_name}` : ''}
+              {greeting}{profile?.first_name ? ` ${profile.first_name}` : ''}
             </h1>
           </div>
           <button
