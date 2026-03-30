@@ -47,9 +47,8 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex justify-between items-start mb-8">
           <div>
-            <p className="section-label mb-2">{greeting}</p>
             <h1 className="text-2xl font-bold text-white">
-              {profile?.first_name || 'There'}
+              {greeting}{profile?.first_name ? `, ${profile.first_name}` : ''}
             </h1>
           </div>
           <button
