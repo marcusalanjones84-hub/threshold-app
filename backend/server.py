@@ -308,6 +308,40 @@ async def send_to_gohighlevel(signup: GHLSignupRequest):
         return {"status": "error", "message": str(e)}
 
 
+# ============ ADMIN GIFT ACCESS ============
+
+ADMIN_SECRET_KEY = os.environ.get('ADMIN_SECRET_KEY', 'threshold-gift-2026')
+
+class GiftAccessRequest(BaseModel):
+    email: str
+    tier: str  # "pro" or "complete"
+    admin_key: str
+
+@api_router.post("/admin/gift-access")
+async def gift_access(request: GiftAccessRequest):
+    """Gift premium access to a user by email"""
+    
+    # Verify admin key
+    if request.admin_key != ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=403, detail="Invalid admin key")
+    
+    # Validate tier
+    if request.tier not in ['pro', 'complete', 'free']:
+        raise HTTPException(status_code=400, detail="Invalid tier. Use 'pro', 'complete', or 'free'")
+    
+    # This endpoint just returns success - the actual tier update happens in Supabase
+    # We'll call Supabase from the frontend since we have the anon key there
+    
+    logger.info(f"Gift access request: {request.email} -> {request.tier}")
+    
+    return {
+        "status": "success",
+        "message": f"Ready to gift {request.tier} access to {request.email}",
+        "email": request.email,
+        "tier": request.tier
+    }
+
+
 # Include the router in the main app
 app.include_router(api_router)
 

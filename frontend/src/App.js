@@ -23,6 +23,7 @@ import Register from './pages/Register';
 import Settings from './pages/Settings';
 import PartnerAccess from './pages/PartnerAccess';
 import PartnerView from './pages/PartnerView';
+import AdminGift from './pages/AdminGift';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -106,6 +107,9 @@ function AppRoutes() {
         
         {/* Public partner view route - accessible without auth */}
         <Route path="/partner/:code" element={<PartnerView />} />
+        
+        {/* Admin gift page - requires secret key */}
+        <Route path="/admin/gift" element={<AdminGift />} />
         
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
