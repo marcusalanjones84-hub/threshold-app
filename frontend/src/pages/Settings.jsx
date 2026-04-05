@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { ArrowLeft, LogOut, Crown, Trash2, Bell, BellOff, Clock, ChevronDown, Sun, Moon, Heart, ChevronRight } from 'lucide-react';
+import Footer from '../components/Footer';
 
 // Available reminder times
 const MORNING_TIMES = [
@@ -366,6 +367,8 @@ export default function Settings() {
             Threshold v1.0.0
           </p>
         </div>
+        
+        <Footer />
       </div>
     </div>
   );

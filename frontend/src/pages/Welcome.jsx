@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowRight } from 'lucide-react';
+import Footer from '../components/Footer';
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -73,11 +74,13 @@ export default function Welcome() {
       </div>
       
       {/* Footer */}
-      <div className="content-width pb-8">
-        <p className="text-xs text-[#8E8E93] text-center">
+      <div className="content-width pb-4">
+        <p className="text-xs text-[#8E8E93] text-center mb-4">
           15 questions. 5 minutes. Completely private.
         </p>
       </div>
+      
+      <Footer />
     </div>
   );
 }
